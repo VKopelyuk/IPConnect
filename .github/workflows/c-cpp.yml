@@ -1,0 +1,50 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "v2" ]
+  pull_request:
+    branches: [ "v2" ]
+
+jobs:
+  build:
+    name: Build and Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up environment for each OS
+      - name: Set up dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt5-default qttools5-dev-tools build-essential cmake
+
+      - name: Set up dependencies
+        if: matrix.os == 'macos-latest'
+        run: brew install qt cmake
+
+      - name: Set up dependencies
+        if: matrix.os == 'windows-latest'
+        uses: actions/setup-python@v3 # Required for pip (cmake install workaround)
+      - run: |
+          choco install cmake --install-arguments 'ADD_CMAKE_TO_PATH=System'
+          choco install qt5
+
+      # Step 3: Build the Project
+      - name: Configure and Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "${{ matrix.generator }}"
+          cmake --build .
+
+        env:
+          CMAKE_PREFIX_PATH: |
+              Setup: Building successful logging
